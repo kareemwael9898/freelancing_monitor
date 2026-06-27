@@ -1,12 +1,12 @@
-# Nafezly Freelance Projects Monitor
+# Freelance Projects Monitor (Nafezly & Mostaql)
 
-A lightweight automated monitor that scrapes the Nafezly projects list every 30 minutes, filters by mobile/app development keywords, and sends notifications directly to your Telegram chat.
+A lightweight automated monitor that scrapes the Nafezly and Mostaql projects lists every 30 minutes, filters by mobile/app/IoT development keywords, and sends notifications directly to your Telegram chat.
 
 ## Features
 - **Auto-run**: Runs every 30 minutes via GitHub Actions.
-- **State persistence**: Keeps track of processed project IDs using `state.json` to prevent duplicate alerts.
-- **Filter-matching**: Filters projects by keywords (e.g. Flutter, Android, iOS, mobile apps) in both English and Arabic.
-- **Telegram Notifications**: Formatted HTML alerts sent to your Telegram chat with project title, budget, duration, and link.
+- **State persistence**: Keeps track of processed project IDs from both platforms using `state.json` to prevent duplicate alerts.
+- **Filter-matching**: Filters projects by keywords (e.g. Flutter, Android, iOS, mobile apps, IoT, smart devices) in both English and Arabic.
+- **Telegram Notifications**: Formatted HTML alerts sent to your Telegram chat with project title, budget, duration, platform source, and direct link.
 
 ---
 
