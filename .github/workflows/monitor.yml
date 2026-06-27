@@ -2,8 +2,7 @@ name: Freelance Projects Monitor
 
 on:
   schedule:
-    # Run every 30 minutes
-    - cron: '*/30 * * * *'
+    - cron: '12,42 * * * *'
   workflow_dispatch: # Allow running manually from the GitHub Actions tab
 
 jobs:
