@@ -5,6 +5,7 @@ import re
 import argparse
 import urllib.request
 import urllib.parse
+import time
 from bs4 import BeautifulSoup
 
 # Configurable keywords
@@ -43,7 +44,7 @@ KEYWORDS = [
     # --- Arabic: General Dev ---
     'واجهة مستخدم', 'تجربة مستخدم',
     'متجر الكتروني', 'متجر إلكتروني',
-    'لوحة تحكم', 'داشبورد',
+    'لوحة تحكم', 'داشبورد', 'موقع'
 ]
 
 STATE_FILE = 'state.json'
@@ -360,15 +361,26 @@ def main():
         args.dry_run = True
 
     # 1. Fetch projects from all sources
+    start = time.time()
     nafezly_projects = get_nafezly_projects()
+    nafezly_time = time.time() - start
+
+    start = time.time()
     mostaql_projects = get_mostaql_projects()
+    mostaql_time = time.time() - start
+
+    start = time.time()
     kafiil_projects = get_kafiil_projects()
+    kafiil_time = time.time() - start
+
+    start = time.time()
     khamsat_requests = get_khamsat_requests()
+    khamsat_time = time.time() - start
     
-    print(f"Found {len(nafezly_projects)} projects on Nafezly.")
-    print(f"Found {len(mostaql_projects)} projects on Mostaql.")
-    print(f"Found {len(kafiil_projects)} projects on Kafiil.")
-    print(f"Found {len(khamsat_requests)} projects on Khamsat.")
+    print(f"Found {len(nafezly_projects)} projects on Nafezly in {nafezly_time:.2f} seconds.")
+    print(f"Found {len(mostaql_projects)} projects on Mostaql in {mostaql_time:.2f} seconds.")
+    print(f"Found {len(kafiil_projects)} projects on Kafiil in {kafiil_time:.2f} seconds.")
+    print(f"Found {len(khamsat_requests)} projects on Khamsat in {khamsat_time:.2f} seconds.")
 
     all_projects = nafezly_projects + mostaql_projects + kafiil_projects + khamsat_requests
 
