@@ -8,14 +8,14 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 # Configurable keywords
-KEYWORDS = [
+KEYWORDS = [ 
     # English keywords
     'app', 'flutter', 'mobile', 'android', 'ios', 'swift', 'kotlin', 
-    'react native', 'native', 'xamarin', 'cordova', 'phonegap', 
+    'native',  'desktop',  'web' , 'application', 'applications', 'software',  
     'mobile application', 'mobile app', 'mobile development',
     # Arabic keywords
     'فلاتر', 'تطبيق', 'تطبيقات', 'اندرويد', 'أندرويد', 'ايفون', 'أيفون', 
-    'موبايل', 'جوال', 'هاتف', 'هواتف', 'تطوير تطبيقات'
+    'موبايل', 'جوال', 'هاتف', 'هواتف', 'تطوير تطبيقات', 'تطوير تطبيقات', 'برنامج','برامج' , 'برمجة' , 'نظام' , 'أنظمة' , 'نظام ذكي' , 'أنظمة ذكية'
 ]
 
 STATE_FILE = 'state.json'
