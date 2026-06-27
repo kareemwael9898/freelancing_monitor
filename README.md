@@ -1,6 +1,6 @@
-# Freelance Projects Monitor (Nafezly, Mostaql & Kafiil)
+# Freelance Projects Monitor (Nafezly, Mostaql, Kafiil & Khamsat)
 
-A lightweight automated monitor that scrapes the Nafezly, Mostaql, and Kafiil projects lists every 30 minutes, filters by mobile/app/IoT development keywords, and sends notifications directly to your Telegram chat.
+A lightweight automated monitor that scrapes Nafezly, Mostaql, Kafiil, and Khamsat every 30 minutes, filters by mobile/app/IoT development keywords, and sends notifications directly to your Telegram chat.
 
 ## Features
 - **Auto-run**: Runs every 30 minutes via GitHub Actions.
