@@ -8,14 +8,42 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 # Configurable keywords
-KEYWORDS = [ 
+KEYWORDS = [
     # English keywords
-    'app', 'flutter', 'mobile', 'android', 'ios', 'swift', 'kotlin', 
-    'native',  'desktop',  'web' , 'application', 'applications', 'software',  
+    'app', 'flutter', 'mobile', 'android', 'ios', 'swift', 'kotlin',
+    'native', 'desktop', 'web', 'application', 'applications', 'software',
     'mobile application', 'mobile app', 'mobile development',
-    # Arabic keywords
-    'فلاتر', 'تطبيق', 'تطبيقات', 'اندرويد', 'أندرويد', 'ايفون', 'أيفون', 
-    'موبايل', 'جوال', 'هاتف', 'هواتف', 'تطوير تطبيقات', 'تطوير تطبيقات', 'برنامج','برامج' , 'برمجة' , 'نظام' , 'أنظمة' , 'نظام ذكي' , 'أنظمة ذكية'
+
+    # --- IoT / Embedded / Hardware ---
+    'iot', 'embedded',
+    'arduino', 'esp',
+    'microcontroller', 'sensor', 'sensors', 'smart home',
+    'automation', 'mqtt', 'bluetooth',
+
+    # --- App Store / Publishing ---
+    'google play', 'play store', 'app store', 'testflight',
+    'apk', 'aab', 'ipa', 'publish', 'release',
+
+    # --- General Dev ---
+    'api', 'firebase', 'supabase', 'laravel',
+
+    # --- Arabic: Flutter / Mobile ---
+    'فلاتر', 'دارت', 'تطبيق', 'تطبيقات', 'تطبيق موبايل',
+    'تطبيق جوال', 'تطبيق هاتف', 'تطبيق اندرويد', 'تطبيق ايفون',
+    'اندرويد', 'أندرويد', 'ايفون', 'أيفون', 'آيفون',
+    'موبايل', 'جوال', 'هاتف', 'هواتف', 'هاتف ذكي',
+    'تطوير تطبيقات', 'مطور تطبيقات', 'مبرمج تطبيقات',
+    'برنامج', 'برامج', 'برمجة', 'نظام', 'أنظمة',
+
+    # --- Arabic: IoT / Embedded ---
+    'اردوينو', 'أردوينو',
+    'حساسات', 'مستشعرات', 'منزل ذكي', 'ذكي',
+    'نظام ذكي', 'أنظمة ذكية', 'أتمتة', 'تحكم عن بعد',
+
+    # --- Arabic: General Dev ---
+    'واجهة مستخدم', 'تجربة مستخدم',
+    'متجر الكتروني', 'متجر إلكتروني',
+    'لوحة تحكم', 'داشبورد',
 ]
 
 STATE_FILE = 'state.json'
