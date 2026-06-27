@@ -26,14 +26,14 @@ def load_state():
         try:
             with open(STATE_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return set(data.get("processed_ids", []))
+                return list(data.get("processed_ids", []))
         except Exception as e:
             print(f"Error loading state.json: {e}. Starting fresh.")
-    return set()
+    return []
 
 def save_state(processed_ids):
     # Keep only the last MAX_STATE_IDS to keep the file size small
-    id_list = list(processed_ids)[-MAX_STATE_IDS:]
+    id_list = processed_ids[-MAX_STATE_IDS:]
     try:
         with open(STATE_FILE, 'w', encoding='utf-8') as f:
             json.dump({"processed_ids": id_list}, f, ensure_ascii=False, indent=2)
@@ -126,6 +126,7 @@ def main():
         sys.exit(1)
 
     processed_ids = load_state()
+    processed_set = set(processed_ids)
     is_initial_run = len(processed_ids) == 0
     if is_initial_run:
         print("Initial run detected. Seeding database with current project IDs.")
@@ -150,11 +151,12 @@ def main():
             project_id = id_match.group(1)
 
             # Skip if already processed
-            if project_id in processed_ids:
+            if project_id in processed_set:
                 continue
 
             # Mark as processed
-            processed_ids.add(project_id)
+            processed_ids.append(project_id)
+            processed_set.add(project_id)
 
             # Extract Description
             desc_tag = box.find('h3')
