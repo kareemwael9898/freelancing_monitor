@@ -227,6 +227,69 @@ def get_mostaql_projects():
             print(f"Error parsing Mostaql project row: {row_err}")
     return projects
 
+def get_kafiil_projects():
+    url = "https://kafiil.com/projects"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html = response.read()
+    except Exception as e:
+        print(f"Error fetching Kafiil page: {e}")
+        return []
+
+    soup = BeautifulSoup(html, 'html.parser')
+    project_boxes = soup.find_all(class_='project-box')
+    projects = []
+    for box in reversed(project_boxes):
+        try:
+            link_tag = box.select_one('a.name')
+            if not link_tag:
+                continue
+            
+            href = link_tag.get('href', '')
+            if not href:
+                continue
+            href = urllib.parse.urljoin("https://kafiil.com", href)
+            
+            import copy
+            link_tag_copy = copy.copy(link_tag)
+            tag_el = link_tag_copy.find('span', class_='tag')
+            if tag_el:
+                tag_el.extract()
+            title = link_tag_copy.get_text(strip=True)
+            
+            id_match = re.search(r'/project/(\d+)', href)
+            if not id_match:
+                continue
+            project_id = f"kafiil_{id_match.group(1)}"
+            
+            desc_el = box.select_one('.info-content')
+            desc = desc_el.get_text(strip=True) if desc_el else ""
+            
+            price_el = box.select_one('.price')
+            budget = price_el.get_text(strip=True) if price_el else ""
+            
+            clock_icon = box.find('i', class_=re.compile(r'fa-clock'))
+            posted_time = clock_icon.parent.get_text(strip=True) if clock_icon else ""
+            posted_time = re.sub(r'\s+', ' ', posted_time)
+            
+            projects.append({
+                "id": project_id,
+                "title": title,
+                "link": href,
+                "desc": desc,
+                "budget": budget,
+                "days": "غير محدد",
+                "posted_time": posted_time,
+                "site_name": "كفيل",
+                "site_key": "kafiil"
+            })
+        except Exception as box_err:
+            print(f"Error parsing Kafiil project box: {box_err}")
+    return projects
+
+
 def main():
     parser = argparse.ArgumentParser(description="Freelance Projects Monitor")
     parser.bin = "monitor"
@@ -242,14 +305,16 @@ def main():
         print("Forcing --dry-run mode.")
         args.dry_run = True
 
-    # 1. Fetch projects from both sources
+    # 1. Fetch projects from all sources
     nafezly_projects = get_nafezly_projects()
     mostaql_projects = get_mostaql_projects()
+    kafiil_projects = get_kafiil_projects()
     
     print(f"Found {len(nafezly_projects)} projects on Nafezly.")
     print(f"Found {len(mostaql_projects)} projects on Mostaql.")
+    print(f"Found {len(kafiil_projects)} projects on Kafiil.")
 
-    all_projects = nafezly_projects + mostaql_projects
+    all_projects = nafezly_projects + mostaql_projects + kafiil_projects
 
     processed_ids = load_state()
     processed_set = set(processed_ids)
