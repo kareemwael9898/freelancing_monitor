@@ -48,7 +48,7 @@ KEYWORDS = [
 ]
 
 STATE_FILE = 'state.json'
-MAX_STATE_IDS = 1000  # Prevent state.json from growing infinitely
+MAX_STATE_IDS = 5000  # Prevent state.json from growing infinitely
 
 def load_state():
     if os.path.exists(STATE_FILE):
