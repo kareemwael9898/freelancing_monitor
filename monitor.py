@@ -47,6 +47,19 @@ KEYWORDS = [
     'لوحة تحكم', 'داشبورد', 'موقع'
 ]
 
+EXCLUDE_KEYWORDS = [
+    # --- Website builders (not app dev) ---
+    'wordpress', 'elementor', 'shopify', 'woocommerce',
+    'ووردبريس', 'وورد بريس', 'شوبيفاي', 'ووكومرس', 'وردبريس', 'ورد بريس',
+    'notion', 'نوشن', 'canva', 'كانفا', ' سلة', 'salla', 'منصة زد', 
+
+    # --- SEO / digital marketing ---
+    'seo','سيو', 'SSL',
+
+    # --- Generic dev ---
+    'php', 'react', 'typescript', 'devops', 'next.js', 
+]
+
 STATE_FILE = 'state.json'
 MAX_STATE_IDS = 5000  # Prevent state.json from growing infinitely
 
@@ -84,6 +97,9 @@ def escape_html(text):
 
 def matches_keywords(title, desc):
     combined_text = (title + " " + desc).lower()
+    for kw in EXCLUDE_KEYWORDS:
+        if re.search(r'\b' + re.escape(kw.lower()) + r'\b', combined_text) if kw.isascii() else (kw.lower() in combined_text):
+            return False, None
     for kw in KEYWORDS:
         # Match whole word boundary for English, or substring for Arabic
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', combined_text) if kw.isascii() else (kw.lower() in combined_text):
