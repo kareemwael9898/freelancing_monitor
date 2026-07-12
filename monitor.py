@@ -59,7 +59,12 @@ EXCLUDE_KEYWORDS = [
     # --- Generic dev ---
     'php', 'react', 'typescript', 'devops', 'next.js', 
 
-    'تقييمات'
+    'تقييمات', 'ديسكورد', 'discord'
+]
+
+# exclude if comes together 
+EXCLUDE_IF_COMES_TOGETHER = [
+    ('بوت','حجز')
 ]
 
 STATE_FILE = 'state.json'
@@ -102,6 +107,10 @@ def matches_keywords(title, desc):
     for kw in EXCLUDE_KEYWORDS:
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', combined_text) if kw.isascii() else (kw.lower() in combined_text):
             return False, None
+    for kw1, kw2 in EXCLUDE_IF_COMES_TOGETHER:
+        if re.search(r'\b' + re.escape(kw1.lower()) + r'\b', combined_text) if kw1.isascii() else (kw1.lower() in combined_text):
+            if re.search(r'\b' + re.escape(kw2.lower()) + r'\b', combined_text) if kw2.isascii() else (kw2.lower() in combined_text):
+                return False, None
     for kw in KEYWORDS:
         # Match whole word boundary for English, or substring for Arabic
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', combined_text) if kw.isascii() else (kw.lower() in combined_text):
