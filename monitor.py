@@ -58,6 +58,8 @@ EXCLUDE_KEYWORDS = [
 
     # --- Generic dev ---
     'php', 'react', 'typescript', 'devops', 'next.js', 
+
+    'تقييمات'
 ]
 
 STATE_FILE = 'state.json'
