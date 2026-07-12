@@ -51,7 +51,7 @@ EXCLUDE_KEYWORDS = [
     # --- Website builders (not app dev) ---
     'wordpress', 'elementor', 'shopify', 'woocommerce',
     'ووردبريس', 'وورد بريس', 'شوبيفاي', 'ووكومرس', 'وردبريس', 'ورد بريس',
-    'notion', 'نوشن', 'canva', 'كانفا', ' سلة', 'salla', 'منصة زد', 
+    'notion', 'نوشن', 'canva', 'كانفا', ' سلة', 'salla', 'منصة زد', 'odoo', 'أودو'
 
     # --- SEO / digital marketing ---
     'seo','سيو', 'SSL',
