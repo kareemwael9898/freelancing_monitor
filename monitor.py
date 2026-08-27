@@ -3,50 +3,72 @@ import sys
 import json
 import re
 import argparse
+import urllib.request
+import urllib.parse
 import time
 from bs4 import BeautifulSoup
-import requests
-from playwright.sync_api import sync_playwright
 
 # Configurable keywords
 KEYWORDS = [
+    # English keywords
     'app', 'flutter', 'mobile', 'android', 'ios', 'swift', 'kotlin',
     'native', 'desktop', 'web', 'application', 'applications', 'software',
     'mobile application', 'mobile app', 'mobile development',
-    'iot', 'embedded', 'arduino', 'esp', 'microcontroller', 'sensor', 'sensors', 'smart home',
+
+    # --- IoT / Embedded / Hardware ---
+    'iot', 'embedded',
+    'arduino', 'esp',
+    'microcontroller', 'sensor', 'sensors', 'smart home',
     'automation', 'mqtt', 'bluetooth',
+
+    # --- App Store / Publishing ---
     'google play', 'play store', 'app store', 'testflight',
     'apk', 'aab', 'ipa', 'publish', 'release',
+
+    # --- General Dev ---
     'api', 'firebase', 'supabase', 'laravel',
+
+    # --- Arabic: Flutter / Mobile ---
     'فلاتر', 'دارت', 'تطبيق', 'تطبيقات', 'تطبيق موبايل',
     'تطبيق جوال', 'تطبيق هاتف', 'تطبيق اندرويد', 'تطبيق ايفون',
     'اندرويد', 'أندرويد', 'ايفون', 'أيفون', 'آيفون',
     'موبايل', 'جوال', 'هاتف', 'هواتف', 'هاتف ذكي',
     'تطوير تطبيقات', 'مطور تطبيقات', 'مبرمج تطبيقات',
     'برنامج', 'برامج', 'برمجة', 'نظام', 'أنظمة',
+
+    # --- Arabic: IoT / Embedded ---
     'اردوينو', 'أردوينو',
     'حساسات', 'مستشعرات', 'منزل ذكي', 'ذكي',
     'نظام ذكي', 'أنظمة ذكية', 'أتمتة', 'تحكم عن بعد',
+
+    # --- Arabic: General Dev ---
     'واجهة مستخدم', 'تجربة مستخدم',
     'متجر الكتروني', 'متجر إلكتروني',
     'لوحة تحكم', 'داشبورد', 'موقع'
 ]
 
 EXCLUDE_KEYWORDS = [
+    # --- Website builders (not app dev) ---
     'wordpress', 'elementor', 'shopify', 'woocommerce',
     'ووردبريس', 'وورد بريس', 'شوبيفاي', 'ووكومرس', 'وردبريس', 'ورد بريس',
     'notion', 'نوشن', 'canva', 'كانفا', ' سلة', 'salla', 'منصة زد', 'odoo', 'أودو',
+
+    # --- SEO / digital marketing ---
     'seo','سيو', 'SSL',
+
+    # --- Generic dev ---
     'php', 'react', 'typescript', 'devops', 'next.js', 'power bi',
+
     'تقييمات', 'ديسكورد', 'discord', 'كواي',
 ]
 
+# exclude if comes together 
 EXCLUDE_IF_COMES_TOGETHER = [
     ('بوت','حجز')
 ]
 
 STATE_FILE = 'state.json'
-MAX_STATE_IDS = 5000
+MAX_STATE_IDS = 5000  # Prevent state.json from growing infinitely
 
 def load_state():
     if os.path.exists(STATE_FILE):
@@ -54,6 +76,7 @@ def load_state():
             with open(STATE_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 raw_ids = list(data.get("processed_ids", []))
+                # Migrate older pure numeric IDs to nafezly_ prefix
                 migrated_ids = []
                 for pid in raw_ids:
                     if pid.isdigit():
@@ -66,6 +89,7 @@ def load_state():
     return []
 
 def save_state(processed_ids):
+    # Keep only the last MAX_STATE_IDS to keep the file size small
     id_list = processed_ids[-MAX_STATE_IDS:]
     try:
         with open(STATE_FILE, 'w', encoding='utf-8') as f:
@@ -88,6 +112,7 @@ def matches_keywords(title, desc):
             if re.search(r'\b' + re.escape(kw2.lower()) + r'\b', combined_text) if kw2.isascii() else (kw2.lower() in combined_text):
                 return False, None
     for kw in KEYWORDS:
+        # Match whole word boundary for English, or substring for Arabic
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', combined_text) if kw.isascii() else (kw.lower() in combined_text):
             return True, kw
     return False, None
@@ -98,43 +123,47 @@ def extract_meta_by_icon(box, icon_class):
         return ""
     parent_span = icon.find_parent('span')
     if parent_span:
+        # Strip all tags inside to get only clean text
         text = parent_span.get_text(strip=True)
+        # Clean up double spaces
         return re.sub(r'\s+', ' ', text)
     return ""
 
 def send_telegram_message(token, chat_id, message):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = {
+    data = urllib.parse.urlencode({
         "chat_id": chat_id,
         "text": message,
         "parse_mode": "HTML",
         "disable_web_page_preview": "false"
-    }
+    }).encode("utf-8")
+    
+    req = urllib.request.Request(url, data=data, method="POST")
+    req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    
     try:
-        res = requests.post(url, data=payload, timeout=10)
-        res_data = res.json()
-        if not res_data.get("ok"):
-            print(f"Failed to send Telegram message: {res_data}")
-            return False
-        print("Telegram message sent successfully.")
-        return True
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            if not res_data.get("ok"):
+                print(f"Failed to send Telegram message: {res_data}")
+                return False
+            print("Telegram message sent successfully.")
+            return True
     except Exception as e:
         print(f"Error sending Telegram message: {e}")
         return False
 
-# دالة الجلب الموحدة عبر متصفح متخفٍ لتخطي Cloudflare في GitHub Actions
-def fetch_html_content(page, url):
+def get_nafezly_projects():
+    url = "https://nafezly.com/projects"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    req = urllib.request.Request(url, headers=headers)
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(3500)
-        return page.content()
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html = response.read()
     except Exception as e:
-        print(f"Error fetching {url}: {e}")
-        return ""
-
-def get_nafezly_projects(html):
-    if not html:
+        print(f"Error fetching Nafezly page: {e}")
         return []
+
     soup = BeautifulSoup(html, 'html.parser')
     project_boxes = soup.find_all(class_='project-box')
     projects = []
@@ -174,9 +203,17 @@ def get_nafezly_projects(html):
             print(f"Error parsing Nafezly project box: {box_err}")
     return projects
 
-def get_mostaql_projects(html):
-    if not html:
+def get_mostaql_projects():
+    url = "https://mostaql.com/projects?category=development&sort=latest"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html = response.read()
+    except Exception as e:
+        print(f"Error fetching Mostaql page: {e}")
         return []
+
     soup = BeautifulSoup(html, 'html.parser')
     rows = soup.select('tr.project-row')
     projects = []
@@ -188,8 +225,7 @@ def get_mostaql_projects(html):
             href = title_el.get('href', '')
             if not href:
                 continue
-            if not href.startswith('http'):
-                href = f"https://mostaql.com{href}"
+            href = urllib.parse.urljoin("https://mostaql.com", href)
             title = title_el.get_text(strip=True)
             
             id_match = re.search(r'/project/(\d+)', href)
@@ -219,9 +255,17 @@ def get_mostaql_projects(html):
             print(f"Error parsing Mostaql project row: {row_err}")
     return projects
 
-def get_kafiil_projects(html):
-    if not html:
+def get_kafiil_projects():
+    url = "https://kafiil.com/projects"
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html = response.read()
+    except Exception as e:
+        print(f"Error fetching Kafiil page: {e}")
         return []
+
     soup = BeautifulSoup(html, 'html.parser')
     project_boxes = soup.find_all(class_='project-box')
     projects = []
@@ -234,8 +278,7 @@ def get_kafiil_projects(html):
             href = link_tag.get('href', '')
             if not href:
                 continue
-            if not href.startswith('http'):
-                href = f"https://kafiil.com{href}"
+            href = urllib.parse.urljoin("https://kafiil.com", href)
             
             import copy
             link_tag_copy = copy.copy(link_tag)
@@ -274,9 +317,21 @@ def get_kafiil_projects(html):
             print(f"Error parsing Kafiil project box: {box_err}")
     return projects
 
-def get_khamsat_requests(html):
-    if not html:
+def get_khamsat_requests():
+    url = "https://khamsat.com/community/requests"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
+    }
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            html = response.read()
+    except Exception as e:
+        print(f"Error fetching Khamsat page: {e}")
         return []
+
     soup = BeautifulSoup(html, 'html.parser')
     rows = soup.find_all('tr', class_='forum_post')
     projects = []
@@ -289,10 +344,10 @@ def get_khamsat_requests(html):
             href = link_tag.get('href', '')
             if not href:
                 continue
-            if not href.startswith('http'):
-                href = f"https://khamsat.com{href}"
+            href = urllib.parse.urljoin("https://khamsat.com", href)
             title = link_tag.get_text(strip=True)
             
+            # Extract ID
             match = re.search(r'/community/requests/(\d+)', href)
             if not match:
                 continue
@@ -323,6 +378,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Print matches to console instead of sending to Telegram")
     args = parser.parse_args()
 
+    # Load credentials if not dry run
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
 
@@ -331,46 +387,23 @@ def main():
         print("Forcing --dry-run mode.")
         args.dry_run = True
 
-    # تشغيل جلسة متصفح واحدة لجلب جميع المواقع
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--no-sandbox',
-                '--disable-setuid-sandbox'
-            ]
-        )
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            locale="ar-EG",
-            viewport={"width": 1920, "height": 1080}
-        )
-        page = context.new_page()
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+    # 1. Fetch projects from all sources
+    start = time.time()
+    nafezly_projects = get_nafezly_projects()
+    nafezly_time = time.time() - start
 
-        start = time.time()
-        nafezly_html = fetch_html_content(page, "https://nafezly.com/projects")
-        nafezly_projects = get_nafezly_projects(nafezly_html)
-        nafezly_time = time.time() - start
+    start = time.time()
+    mostaql_projects = get_mostaql_projects()
+    mostaql_time = time.time() - start
 
-        start = time.time()
-        mostaql_html = fetch_html_content(page, "https://mostaql.com/projects?category=development&sort=latest")
-        mostaql_projects = get_mostaql_projects(mostaql_html)
-        mostaql_time = time.time() - start
+    start = time.time()
+    kafiil_projects = get_kafiil_projects()
+    kafiil_time = time.time() - start
 
-        start = time.time()
-        kafiil_html = fetch_html_content(page, "https://kafiil.com/projects")
-        kafiil_projects = get_kafiil_projects(kafiil_html)
-        kafiil_time = time.time() - start
-
-        start = time.time()
-        khamsat_html = fetch_html_content(page, "https://khamsat.com/community/requests")
-        khamsat_requests = get_khamsat_requests(khamsat_html)
-        khamsat_time = time.time() - start
-
-        browser.close()
-
+    start = time.time()
+    khamsat_requests = get_khamsat_requests()
+    khamsat_time = time.time() - start
+    
     print(f"Found {len(nafezly_projects)} projects on Nafezly in {nafezly_time:.2f} seconds.")
     print(f"Found {len(mostaql_projects)} projects on Mostaql in {mostaql_time:.2f} seconds.")
     print(f"Found {len(kafiil_projects)} projects on Kafiil in {kafiil_time:.2f} seconds.")
@@ -389,12 +422,15 @@ def main():
     for project in all_projects:
         project_id = project["id"]
         
+        # Skip if already processed
         if project_id in processed_set:
             continue
 
+        # Mark as processed
         processed_ids.append(project_id)
         processed_set.add(project_id)
 
+        # Check keyword match
         matches, keyword = matches_keywords(project["title"], project["desc"])
         if not matches:
             continue
@@ -402,10 +438,12 @@ def main():
         project["matched_keyword"] = keyword
         new_matches.append(project)
 
+    # 2. Handle matches
     if new_matches:
         print(f"Found {len(new_matches)} new matching projects.")
         
         for project in new_matches:
+            # Format message
             site_tag = f"على {project['site_name']}"
             msg = (
                 f"🔔 <b>مشروع جديد {site_tag}!</b>\n\n"
@@ -428,6 +466,7 @@ def main():
     else:
         print("No new matching projects found.")
 
+    # 3. Save updated state
     save_state(processed_ids)
 
 if __name__ == "__main__":
