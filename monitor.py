@@ -59,7 +59,7 @@ EXCLUDE_KEYWORDS = [
     # --- Generic dev ---
     'php', 'react', 'typescript', 'devops', 'next.js', 'power bi',
 
-    'تقييمات', 'ديسكورد', 'discord', 'كواي', 'gmail',
+    'تقييمات', 'ديسكورد', 'discord', 'كواي', 'gmail', 'جيميل',
 ]
 
 # exclude if comes together 
